@@ -22,80 +22,84 @@ import {
   Plus,
   Mail,
   Phone,
-  GraduationCap,
+  Calendar as GraduationCap,
   Trash2,
   CreditCard as Edit2,
 } from 'lucide-react-native';
 
-const mockFaculty = [
+const mockStudents = [
   {
     id: '1',
-    name: 'Dr. John Smith',
-    email: 'john.smith@university.edu',
-    phone: '+1 (555) 123-4567',
+    name: 'Alice Johnson',
+    email: 'alice.johnson@student.edu',
+    phone: '+1 (555) 987-6543',
     department: 'Computer Science',
-    designation: 'Professor',
-    courses: ['Advanced Database Systems', 'Web Development'],
+    enrollmentYear: '2022',
+    courses: ['Data Structures', 'Operating Systems'],
   },
   {
     id: '2',
-    name: 'Dr. Sarah Wilson',
-    email: 'sarah.wilson@university.edu',
-    phone: '+1 (555) 234-5678',
-    department: 'Computer Science',
-    designation: 'Associate Professor',
-    courses: ['Machine Learning', 'Artificial Intelligence'],
+    name: 'Bob Williams',
+    email: 'bob.williams@student.edu',
+    phone: '+1 (555) 876-5432',
+    department: 'Electronics',
+    enrollmentYear: '2021',
+    courses: ['Digital Logic', 'Signal Processing'],
   },
 ];
 
-export default function FacultyManagementScreen() {
-  const [facultyList, setFacultyList] = useState(mockFaculty);
+export default function StudentManagementScreen() {
+  const [studentList, setStudentList] = useState(mockStudents);
   const [searchQuery, setSearchQuery] = useState('');
   const [isAddModalVisible, setIsAddModalVisible] = useState(false);
-  const [newFaculty, setNewFaculty] = useState({
+  const [newStudent, setNewStudent] = useState({
     name: '',
     email: '',
     phone: '',
     department: '',
-    designation: '',
+    enrollmentYear: '',
   });
 
-  const filteredFaculty = facultyList.filter(
-    (faculty) =>
-      faculty.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      faculty.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      faculty.department.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredStudents = studentList.filter(
+    (student) =>
+      student.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      student.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      student.department.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleAddFaculty = () => {
+  const handleAddStudent = () => {
     const newEntry = {
-      ...newFaculty,
+      ...newStudent,
       id: Date.now().toString(),
       courses: [],
     };
 
-    setFacultyList((prev) => [newEntry, ...prev]);
+    setStudentList((prev) => [newEntry, ...prev]);
     setIsAddModalVisible(false);
-    setNewFaculty({
+    setNewStudent({
       name: '',
       email: '',
       phone: '',
       department: '',
-      designation: '',
+      enrollmentYear: '',
     });
   };
 
-  const handleDeleteFaculty = (id, name) => {
+  // New function to confirm before deleting
+  const handleDeleteStudent = (id) => {
     Alert.alert(
-      'Delete Faculty',
-      `Are you sure you want to delete ${name}?`,
+      "Confirm Delete",
+      "Are you sure you want to delete this student?",
       [
-        { text: 'Cancel', style: 'cancel' },
         {
-          text: 'Delete',
-          style: 'destructive',
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Delete",
+          style: "destructive",
           onPress: () => {
-            setFacultyList((prev) => prev.filter((faculty) => faculty.id !== id));
+            setStudentList((prev) => prev.filter(student => student.id !== id));
           },
         },
       ],
@@ -105,14 +109,14 @@ export default function FacultyManagementScreen() {
 
   return (
     <View style={styles.container}>
-      <Header title="Faculty Management" />
+      <Header title="Student Management" />
 
       <View style={styles.content}>
         <View style={styles.searchContainer}>
           <Search size={20} color={COLORS.gray} style={styles.searchIcon} />
           <TextInput
             style={styles.searchInput}
-            placeholder="Search faculty..."
+            placeholder="Search students..."
             value={searchQuery}
             onChangeText={setSearchQuery}
             placeholderTextColor={COLORS.gray}
@@ -126,14 +130,14 @@ export default function FacultyManagementScreen() {
         </View>
 
         <FlatList
-          data={filteredFaculty}
+          data={filteredStudents}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
-            <View style={styles.facultyCard}>
-              <View style={styles.facultyHeader}>
+            <View style={styles.studentCard}>
+              <View style={styles.studentHeader}>
                 <View>
-                  <Text style={styles.facultyName}>{item.name}</Text>
-                  <Text style={styles.designation}>{item.designation}</Text>
+                  <Text style={styles.studentName}>{item.name}</Text>
+                  <Text style={styles.enrollmentYear}>Enrollment: {item.enrollmentYear}</Text>
                 </View>
                 <View style={styles.actionButtons}>
                   <TouchableOpacity style={styles.editButton}>
@@ -141,14 +145,14 @@ export default function FacultyManagementScreen() {
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={styles.deleteButton}
-                    onPress={() => handleDeleteFaculty(item.id, item.name)}
+                    onPress={() => handleDeleteStudent(item.id)}
                   >
                     <Trash2 size={16} color={COLORS.error} />
                   </TouchableOpacity>
                 </View>
               </View>
 
-              <View style={styles.facultyDetails}>
+              <View style={styles.studentDetails}>
                 <View style={styles.detailItem}>
                   <Mail size={16} color={COLORS.gray} />
                   <Text style={styles.detailText}>{item.email}</Text>
@@ -166,7 +170,7 @@ export default function FacultyManagementScreen() {
               </View>
 
               <View style={styles.coursesContainer}>
-                <Text style={styles.coursesLabel}>Assigned Courses:</Text>
+                <Text style={styles.coursesLabel}>Enrolled Courses:</Text>
                 <View style={styles.coursesList}>
                   {item.courses.map((course, index) => (
                     <View key={index} style={styles.courseBadge}>
@@ -177,7 +181,7 @@ export default function FacultyManagementScreen() {
               </View>
             </View>
           )}
-          contentContainerStyle={styles.facultyList}
+          contentContainerStyle={styles.studentList}
         />
 
         <Modal
@@ -188,14 +192,14 @@ export default function FacultyManagementScreen() {
         >
           <View style={styles.modalOverlay}>
             <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>Add New Faculty</Text>
+              <Text style={styles.modalTitle}>Add New Student</Text>
 
               <TextInput
                 style={styles.input}
                 placeholder="Full Name"
-                value={newFaculty.name}
+                value={newStudent.name}
                 onChangeText={(text) =>
-                  setNewFaculty({ ...newFaculty, name: text })
+                  setNewStudent({ ...newStudent, name: text })
                 }
                 placeholderTextColor={COLORS.gray}
               />
@@ -203,9 +207,9 @@ export default function FacultyManagementScreen() {
               <TextInput
                 style={styles.input}
                 placeholder="Email"
-                value={newFaculty.email}
+                value={newStudent.email}
                 onChangeText={(text) =>
-                  setNewFaculty({ ...newFaculty, email: text })
+                  setNewStudent({ ...newStudent, email: text })
                 }
                 placeholderTextColor={COLORS.gray}
                 keyboardType="email-address"
@@ -214,9 +218,9 @@ export default function FacultyManagementScreen() {
               <TextInput
                 style={styles.input}
                 placeholder="Phone"
-                value={newFaculty.phone}
+                value={newStudent.phone}
                 onChangeText={(text) =>
-                  setNewFaculty({ ...newFaculty, phone: text })
+                  setNewStudent({ ...newStudent, phone: text })
                 }
                 placeholderTextColor={COLORS.gray}
                 keyboardType="phone-pad"
@@ -225,21 +229,22 @@ export default function FacultyManagementScreen() {
               <TextInput
                 style={styles.input}
                 placeholder="Department"
-                value={newFaculty.department}
+                value={newStudent.department}
                 onChangeText={(text) =>
-                  setNewFaculty({ ...newFaculty, department: text })
+                  setNewStudent({ ...newStudent, department: text })
                 }
                 placeholderTextColor={COLORS.gray}
               />
 
               <TextInput
                 style={styles.input}
-                placeholder="Designation"
-                value={newFaculty.designation}
+                placeholder="Enrollment Year"
+                value={newStudent.enrollmentYear}
                 onChangeText={(text) =>
-                  setNewFaculty({ ...newFaculty, designation: text })
+                  setNewStudent({ ...newStudent, enrollmentYear: text })
                 }
                 placeholderTextColor={COLORS.gray}
+                keyboardType="numeric"
               />
 
               <View style={styles.modalButtons}>
@@ -252,9 +257,9 @@ export default function FacultyManagementScreen() {
 
                 <TouchableOpacity
                   style={[styles.modalButton, styles.addButtonModal]}
-                  onPress={handleAddFaculty}
+                  onPress={handleAddStudent}
                 >
-                  <Text style={styles.addButtonText}>Add Faculty</Text>
+                  <Text style={styles.addButtonText}>Add Student</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -303,28 +308,28 @@ const styles = StyleSheet.create({
     marginLeft: SPACING.sm,
     ...SHADOWS.small,
   },
-  facultyList: {
+  studentList: {
     paddingBottom: 100,
   },
-  facultyCard: {
+  studentCard: {
     backgroundColor: COLORS.white,
     borderRadius: 12,
     padding: SPACING.md,
     marginBottom: SPACING.md,
     ...SHADOWS.small,
   },
-  facultyHeader: {
+  studentHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     marginBottom: SPACING.sm,
   },
-  facultyName: {
+  studentName: {
     fontFamily: FONT.semiBold,
     fontSize: SIZES.lg,
     color: COLORS.darkGray,
   },
-  designation: {
+  enrollmentYear: {
     fontFamily: FONT.regular,
     fontSize: SIZES.sm,
     color: COLORS.gray,
@@ -339,7 +344,7 @@ const styles = StyleSheet.create({
   deleteButton: {
     padding: SPACING.xs,
   },
-  facultyDetails: {
+  studentDetails: {
     marginBottom: SPACING.md,
   },
   detailItem: {

@@ -28,7 +28,7 @@ export default function AdminTabsLayout() {
     },
     {
       name: 'students',
-      href: '/(admin)/students',
+      href: '/(admin)/student',
       icon: GraduationCap,
       label: 'Students',
     },

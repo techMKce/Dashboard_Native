@@ -1,39 +1,65 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, Modal, TouchableOpacity } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  ActivityIndicator,
+  Modal,
+  TouchableOpacity,
+  ScrollView,
+} from 'react-native';
 import { COLORS, FONT, SIZES, SPACING } from '@/constants/theme';
 import Header from '@/components/shared/Header';
 import CourseCard, { Course } from '@/components/student/CourseCard';
 import { TriangleAlert as AlertTriangle } from 'lucide-react-native';
 
-// Mock enrolled courses data - in a real app, this would come from an API
-const mockEnrolledCourses: Course[] = [
+// Initial mock data
+const mockEnrolledCourses: Course[] = [];
+const mockAvailableCourses: Course[] = [
   {
     id: '1',
     name: 'Introduction to Computer Science',
-    description: 'A foundational course covering the basics of computer science, algorithms, and programming concepts.',
+    description: 'Basics of computer science, algorithms, and programming.',
     faculty: 'Dr. John Smith',
     credits: 4,
     duration: '16 weeks',
     image: 'https://images.pexels.com/photos/2582937/pexels-photo-2582937.jpeg',
-    enrolled: true,
+    enrolled: false,
   },
   {
-    id: '3',
+    id: '2',
     name: 'Artificial Intelligence',
-    description: 'An introduction to artificial intelligence concepts, machine learning algorithms, and neural networks.',
+    description: 'AI concepts, machine learning, and neural networks.',
     faculty: 'Prof. Michael Lee',
     credits: 4,
     duration: '16 weeks',
     image: 'https://images.pexels.com/photos/8386440/pexels-photo-8386440.jpeg',
-    enrolled: true,
+    enrolled: false,
+  },
+  {
+    id: '3',
+    name: 'Data Structures',
+    description: 'Arrays, stacks, queues, linked lists, and trees.',
+    faculty: 'Prof. Jane Doe',
+    credits: 3,
+    duration: '12 weeks',
+    image: 'https://images.pexels.com/photos/2566581/pexels-photo-2566581.jpeg',
+    enrolled: false,
   },
 ];
 
-export default function EnrolledCoursesScreen() {
+export default function CoursesScreen() {
   const [loading, setLoading] = useState(false);
   const [dropModalVisible, setDropModalVisible] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [enrolledCourses, setEnrolledCourses] = useState(mockEnrolledCourses);
+  const [availableCourses, setAvailableCourses] = useState(mockAvailableCourses);
+
+  const handleEnrollCourse = (course: Course) => {
+    setAvailableCourses(prev => prev.filter(c => c.id !== course.id));
+    setEnrolledCourses(prev => [...prev, { ...course, enrolled: true }]);
+  };
 
   const handleDropCourse = (course: Course) => {
     setSelectedCourse(course);
@@ -42,8 +68,8 @@ export default function EnrolledCoursesScreen() {
 
   const confirmDropCourse = () => {
     if (selectedCourse) {
-      setEnrolledCourses(prev => prev.filter(course => course.id !== selectedCourse.id));
-      // In a real app, you would make an API call here
+      setEnrolledCourses(prev => prev.filter(c => c.id !== selectedCourse.id));
+      setAvailableCourses(prev => [...prev, { ...selectedCourse, enrolled: false }]);
     }
     setDropModalVisible(false);
     setSelectedCourse(null);
@@ -51,37 +77,56 @@ export default function EnrolledCoursesScreen() {
 
   return (
     <View style={styles.container}>
-      <Header title="Enrolled Courses" />
-      
-      <View style={styles.content}>
+      <Header title="My Courses" />
+      <ScrollView contentContainerStyle={styles.content}>
         {loading ? (
-          <ActivityIndicator size="large\" color={COLORS.primary} style={styles.loader} />
-        ) : enrolledCourses.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyStateTitle}>No Enrolled Courses</Text>
-            <Text style={styles.emptyStateText}>
-              You haven't enrolled in any courses yet. Browse available courses to get started.
-            </Text>
-          </View>
+          <ActivityIndicator size="large" color={COLORS.primary} style={styles.loader} />
         ) : (
-          <FlatList
-            data={enrolledCourses}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => (
-              <CourseCard 
-                course={item} 
-                showDropButton
-                onDrop={() => handleDropCourse(item)}
+          <>
+            <Text style={styles.sectionTitle}>Enrolled Courses</Text>
+            {enrolledCourses.length === 0 ? (
+              <Text style={styles.emptyStateText}>You have not enrolled in any courses yet.</Text>
+            ) : (
+              <FlatList
+                data={enrolledCourses}
+                keyExtractor={(item) => item.id}
+                renderItem={({ item }) => (
+                  <CourseCard
+                    course={item}
+                    showDropButton
+                    onDrop={() => handleDropCourse(item)}
+                  />
+                )}
+                scrollEnabled={false}
+                contentContainerStyle={styles.coursesList}
               />
             )}
-            contentContainerStyle={styles.coursesList}
-            showsVerticalScrollIndicator={false}
-          />
+
+            <Text style={styles.sectionTitle}>Available Courses</Text>
+            {availableCourses.length === 0 ? (
+              <Text style={styles.emptyStateText}>No more courses available to enroll.</Text>
+            ) : (
+              <FlatList
+                data={availableCourses}
+                keyExtractor={(item) => item.id}
+                renderItem={({ item }) => (
+                  <CourseCard
+                    course={item}
+                    showEnrollButton
+                    onEnroll={() => handleEnrollCourse(item)}
+                  />
+                )}
+                scrollEnabled={false}
+                contentContainerStyle={styles.coursesList}
+              />
+            )}
+          </>
         )}
 
+        {/* Drop Modal */}
         <Modal
           visible={dropModalVisible}
-          transparent={true}
+          transparent
           animationType="fade"
           onRequestClose={() => setDropModalVisible(false)}
         >
@@ -92,7 +137,6 @@ export default function EnrolledCoursesScreen() {
               <Text style={styles.modalText}>
                 Are you sure you want to drop {selectedCourse?.name}? This action cannot be undone.
               </Text>
-              
               <View style={styles.modalButtons}>
                 <TouchableOpacity
                   style={[styles.modalButton, styles.cancelButton]}
@@ -100,7 +144,6 @@ export default function EnrolledCoursesScreen() {
                 >
                   <Text style={styles.cancelButtonText}>Cancel</Text>
                 </TouchableOpacity>
-                
                 <TouchableOpacity
                   style={[styles.modalButton, styles.dropButton]}
                   onPress={confirmDropCourse}
@@ -111,47 +154,33 @@ export default function EnrolledCoursesScreen() {
             </View>
           </View>
         </Modal>
-      </View>
+      </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
-  content: {
-    flex: 1,
-    padding: SPACING.md,
-  },
-  coursesList: {
-    paddingBottom: 100,
-  },
-  loader: {
-    marginTop: SPACING.xl,
-  },
-  emptyState: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: SPACING.lg,
-  },
-  emptyStateTitle: {
+  container: { flex: 1, backgroundColor: COLORS.background },
+  content: { padding: SPACING.md, paddingBottom: 100 },
+  sectionTitle: {
     fontFamily: FONT.semiBold,
     fontSize: SIZES.lg,
     color: COLORS.darkGray,
     marginBottom: SPACING.sm,
+    marginTop: SPACING.lg,
   },
+  coursesList: { gap: SPACING.md },
+  loader: { marginTop: SPACING.xl },
   emptyStateText: {
     fontFamily: FONT.regular,
     fontSize: SIZES.md,
     color: COLORS.gray,
     textAlign: 'center',
+    marginBottom: SPACING.lg,
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -163,9 +192,7 @@ const styles = StyleSheet.create({
     maxWidth: 400,
     alignItems: 'center',
   },
-  warningIcon: {
-    marginBottom: SPACING.md,
-  },
+  warningIcon: { marginBottom: SPACING.md },
   modalTitle: {
     fontFamily: FONT.bold,
     fontSize: SIZES.lg,
@@ -191,12 +218,8 @@ const styles = StyleSheet.create({
     padding: SPACING.md,
     alignItems: 'center',
   },
-  cancelButton: {
-    backgroundColor: COLORS.background,
-  },
-  dropButton: {
-    backgroundColor: COLORS.error,
-  },
+  cancelButton: { backgroundColor: COLORS.background },
+  dropButton: { backgroundColor: COLORS.error },
   cancelButtonText: {
     fontFamily: FONT.semiBold,
     fontSize: SIZES.md,
