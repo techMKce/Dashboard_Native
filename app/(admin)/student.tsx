@@ -21,8 +21,7 @@ import {
   Search,
   Plus,
   Mail,
-  Phone,
-  Calendar as GraduationCap,
+  GraduationCap,
   Trash2,
   CreditCard as Edit2,
 } from 'lucide-react-native';
@@ -30,21 +29,21 @@ import {
 const mockStudents = [
   {
     id: '1',
+    rollNumber: 'CS001',
     name: 'Alice Johnson',
     email: 'alice.johnson@student.edu',
-    phone: '+1 (555) 987-6543',
     department: 'Computer Science',
-    enrollmentYear: '2022',
-    courses: ['Data Structures', 'Operating Systems'],
+    year: '2',
+    password: 'password123',
   },
   {
     id: '2',
+    rollNumber: 'EC002',
     name: 'Bob Williams',
     email: 'bob.williams@student.edu',
-    phone: '+1 (555) 876-5432',
     department: 'Electronics',
-    enrollmentYear: '2021',
-    courses: ['Digital Logic', 'Signal Processing'],
+    year: '3',
+    password: 'securepass',
   },
 ];
 
@@ -52,12 +51,15 @@ export default function StudentManagementScreen() {
   const [studentList, setStudentList] = useState(mockStudents);
   const [searchQuery, setSearchQuery] = useState('');
   const [isAddModalVisible, setIsAddModalVisible] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editStudentId, setEditStudentId] = useState(null);
   const [newStudent, setNewStudent] = useState({
+    rollNumber: '',
     name: '',
     email: '',
-    phone: '',
     department: '',
-    enrollmentYear: '',
+    year: '',
+    password: '',
   });
 
   const filteredStudents = studentList.filter(
@@ -67,40 +69,45 @@ export default function StudentManagementScreen() {
       student.department.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleAddStudent = () => {
-    const newEntry = {
-      ...newStudent,
-      id: Date.now().toString(),
-      courses: [],
-    };
+  const handleSaveStudent = () => {
+    if (isEditMode) {
+      setStudentList((prev) =>
+        prev.map((student) =>
+          student.id === editStudentId ? { ...newStudent, id: editStudentId } : student
+        )
+      );
+    } else {
+      const newEntry = {
+        ...newStudent,
+        id: Date.now().toString(),
+      };
+      setStudentList((prev) => [newEntry, ...prev]);
+    }
 
-    setStudentList((prev) => [newEntry, ...prev]);
     setIsAddModalVisible(false);
     setNewStudent({
+      rollNumber: '',
       name: '',
       email: '',
-      phone: '',
       department: '',
-      enrollmentYear: '',
+      year: '',
+      password: '',
     });
+    setIsEditMode(false);
+    setEditStudentId(null);
   };
 
-  // New function to confirm before deleting
   const handleDeleteStudent = (id) => {
     Alert.alert(
-      "Confirm Delete",
-      "Are you sure you want to delete this student?",
+      'Confirm Delete',
+      'Are you sure you want to delete this student?',
       [
+        { text: 'Cancel', style: 'cancel' },
         {
-          text: "Cancel",
-          style: "cancel",
-        },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: () => {
-            setStudentList((prev) => prev.filter(student => student.id !== id));
-          },
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () =>
+            setStudentList((prev) => prev.filter((student) => student.id !== id)),
         },
       ],
       { cancelable: true }
@@ -116,14 +123,25 @@ export default function StudentManagementScreen() {
           <Search size={20} color={COLORS.gray} style={styles.searchIcon} />
           <TextInput
             style={styles.searchInput}
-            placeholder="Search students..."
+            placeholder="  Search students..."
             value={searchQuery}
             onChangeText={setSearchQuery}
             placeholderTextColor={COLORS.gray}
           />
           <TouchableOpacity
             style={styles.addButton}
-            onPress={() => setIsAddModalVisible(true)}
+            onPress={() => {
+              setIsAddModalVisible(true);
+              setIsEditMode(false);
+              setNewStudent({
+                rollNumber: '',
+                name: '',
+                email: '',
+                department: '',
+                year: '',
+                password: '',
+              });
+            }}
           >
             <Plus size={24} color={COLORS.white} />
           </TouchableOpacity>
@@ -137,10 +155,19 @@ export default function StudentManagementScreen() {
               <View style={styles.studentHeader}>
                 <View>
                   <Text style={styles.studentName}>{item.name}</Text>
-                  <Text style={styles.enrollmentYear}>Enrollment: {item.enrollmentYear}</Text>
+                  <Text style={styles.studentSubText}>Roll No: {item.rollNumber}</Text>
+                  <Text style={styles.studentSubText}>Year: {item.year}</Text>
                 </View>
                 <View style={styles.actionButtons}>
-                  <TouchableOpacity style={styles.editButton}>
+                  <TouchableOpacity
+                    style={styles.editButton}
+                    onPress={() => {
+                      setNewStudent(item);
+                      setIsEditMode(true);
+                      setEditStudentId(item.id);
+                      setIsAddModalVisible(true);
+                    }}
+                  >
                     <Edit2 size={16} color={COLORS.primary} />
                   </TouchableOpacity>
                   <TouchableOpacity
@@ -159,24 +186,12 @@ export default function StudentManagementScreen() {
                 </View>
 
                 <View style={styles.detailItem}>
-                  <Phone size={16} color={COLORS.gray} />
-                  <Text style={styles.detailText}>{item.phone}</Text>
-                </View>
-
-                <View style={styles.detailItem}>
                   <GraduationCap size={16} color={COLORS.gray} />
                   <Text style={styles.detailText}>{item.department}</Text>
                 </View>
-              </View>
 
-              <View style={styles.coursesContainer}>
-                <Text style={styles.coursesLabel}>Enrolled Courses:</Text>
-                <View style={styles.coursesList}>
-                  {item.courses.map((course, index) => (
-                    <View key={index} style={styles.courseBadge}>
-                      <Text style={styles.courseBadgeText}>{course}</Text>
-                    </View>
-                  ))}
+                <View style={styles.detailItem}>
+                  <Text style={styles.detailText}>Password: {item.password}</Text>
                 </View>
               </View>
             </View>
@@ -192,60 +207,26 @@ export default function StudentManagementScreen() {
         >
           <View style={styles.modalOverlay}>
             <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>Add New Student</Text>
+              <Text style={styles.modalTitle}>
+                {isEditMode ? 'Edit Student' : 'Add New Student'}
+              </Text>
 
-              <TextInput
-                style={styles.input}
-                placeholder="Full Name"
-                value={newStudent.name}
-                onChangeText={(text) =>
-                  setNewStudent({ ...newStudent, name: text })
-                }
-                placeholderTextColor={COLORS.gray}
-              />
-
-              <TextInput
-                style={styles.input}
-                placeholder="Email"
-                value={newStudent.email}
-                onChangeText={(text) =>
-                  setNewStudent({ ...newStudent, email: text })
-                }
-                placeholderTextColor={COLORS.gray}
-                keyboardType="email-address"
-              />
-
-              <TextInput
-                style={styles.input}
-                placeholder="Phone"
-                value={newStudent.phone}
-                onChangeText={(text) =>
-                  setNewStudent({ ...newStudent, phone: text })
-                }
-                placeholderTextColor={COLORS.gray}
-                keyboardType="phone-pad"
-              />
-
-              <TextInput
-                style={styles.input}
-                placeholder="Department"
-                value={newStudent.department}
-                onChangeText={(text) =>
-                  setNewStudent({ ...newStudent, department: text })
-                }
-                placeholderTextColor={COLORS.gray}
-              />
-
-              <TextInput
-                style={styles.input}
-                placeholder="Enrollment Year"
-                value={newStudent.enrollmentYear}
-                onChangeText={(text) =>
-                  setNewStudent({ ...newStudent, enrollmentYear: text })
-                }
-                placeholderTextColor={COLORS.gray}
-                keyboardType="numeric"
-              />
+              {['rollNumber', 'name', 'email', 'department', 'year', 'password'].map(
+                (field, index) => (
+                  <TextInput
+                    key={index}
+                    style={styles.input}
+                    placeholder={field.charAt(0).toUpperCase() + field.slice(1)}
+                    value={newStudent[field]}
+                    onChangeText={(text) =>
+                      setNewStudent((prev) => ({ ...prev, [field]: text }))
+                    }
+                    placeholderTextColor={COLORS.gray}
+                    secureTextEntry={field === 'password'}
+                    keyboardType={field === 'year' ? 'numeric' : 'default'}
+                  />
+                )
+              )}
 
               <View style={styles.modalButtons}>
                 <TouchableOpacity
@@ -257,9 +238,11 @@ export default function StudentManagementScreen() {
 
                 <TouchableOpacity
                   style={[styles.modalButton, styles.addButtonModal]}
-                  onPress={handleAddStudent}
+                  onPress={handleSaveStudent}
                 >
-                  <Text style={styles.addButtonText}>Add Student</Text>
+                  <Text style={styles.addButtonText}>
+                    {isEditMode ? 'Save Changes' : 'Add Student'}
+                  </Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -271,24 +254,10 @@ export default function StudentManagementScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
-  content: {
-    flex: 1,
-    padding: SPACING.md,
-  },
-  searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: SPACING.md,
-  },
-  searchIcon: {
-    position: 'absolute',
-    left: SPACING.md,
-    zIndex: 1,
-  },
+  container: { flex: 1, backgroundColor: COLORS.background },
+  content: { flex: 1, padding: SPACING.md },
+  searchContainer: { flexDirection: 'row', alignItems: 'center', marginBottom: SPACING.md },
+  searchIcon: { position: 'absolute', left: SPACING.md, zIndex: 1 },
   searchInput: {
     flex: 1,
     backgroundColor: COLORS.white,
@@ -308,9 +277,7 @@ const styles = StyleSheet.create({
     marginLeft: SPACING.sm,
     ...SHADOWS.small,
   },
-  studentList: {
-    paddingBottom: 100,
-  },
+  studentList: { paddingBottom: 100 },
   studentCard: {
     backgroundColor: COLORS.white,
     borderRadius: 12,
@@ -321,7 +288,6 @@ const styles = StyleSheet.create({
   studentHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
     marginBottom: SPACING.sm,
   },
   studentName: {
@@ -329,61 +295,21 @@ const styles = StyleSheet.create({
     fontSize: SIZES.lg,
     color: COLORS.darkGray,
   },
-  enrollmentYear: {
+  studentSubText: {
     fontFamily: FONT.regular,
     fontSize: SIZES.sm,
     color: COLORS.gray,
   },
-  actionButtons: {
-    flexDirection: 'row',
-    gap: SPACING.sm,
-  },
-  editButton: {
-    padding: SPACING.xs,
-  },
-  deleteButton: {
-    padding: SPACING.xs,
-  },
-  studentDetails: {
-    marginBottom: SPACING.md,
-  },
-  detailItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: SPACING.xs,
-  },
+  actionButtons: { flexDirection: 'row', gap: SPACING.sm },
+  editButton: { padding: SPACING.xs },
+  deleteButton: { padding: SPACING.xs },
+  studentDetails: { marginTop: SPACING.sm },
+  detailItem: { flexDirection: 'row', alignItems: 'center', marginBottom: SPACING.xs },
   detailText: {
     fontFamily: FONT.regular,
     fontSize: SIZES.sm,
     color: COLORS.gray,
     marginLeft: SPACING.xs,
-  },
-  coursesContainer: {
-    borderTopWidth: 1,
-    borderTopColor: COLORS.lightGray,
-    paddingTop: SPACING.sm,
-  },
-  coursesLabel: {
-    fontFamily: FONT.medium,
-    fontSize: SIZES.sm,
-    color: COLORS.darkGray,
-    marginBottom: SPACING.xs,
-  },
-  coursesList: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: SPACING.xs,
-  },
-  courseBadge: {
-    backgroundColor: `${COLORS.secondary}20`,
-    paddingVertical: SPACING.xs,
-    paddingHorizontal: SPACING.sm,
-    borderRadius: 12,
-  },
-  courseBadgeText: {
-    fontFamily: FONT.medium,
-    fontSize: SIZES.xs,
-    color: COLORS.secondary,
   },
   modalOverlay: {
     flex: 1,
@@ -426,12 +352,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginHorizontal: SPACING.xs,
   },
-  cancelButton: {
-    backgroundColor: COLORS.background,
-  },
-  addButtonModal: {
-    backgroundColor: COLORS.primary,
-  },
+  cancelButton: { backgroundColor: COLORS.background },
+  addButtonModal: { backgroundColor: COLORS.primary },
   cancelButtonText: {
     fontFamily: FONT.semiBold,
     fontSize: SIZES.md,

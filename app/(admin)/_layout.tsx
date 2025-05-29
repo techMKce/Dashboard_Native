@@ -1,7 +1,7 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
 import { COLORS } from '@/constants/theme';
-import { LayoutGrid, Users, GraduationCap, BookOpen, UserPlus } from 'lucide-react-native';
+import { LayoutGrid, Users, GraduationCap, BookOpen, UserPlus, CalendarRangeIcon } from 'lucide-react-native';
 import TabBar from '@/components/shared/TabBar';
 import { View, StyleSheet } from 'react-native';
 import { useAuth } from '@/context/AuthContext';
@@ -43,6 +43,12 @@ export default function AdminTabsLayout() {
       href: '/(admin)/assign',
       icon: UserPlus,
       label: 'Assign',
+    },
+    {
+      name: 'schedule',
+      href: '/(admin)/schedule',
+      icon: CalendarRangeIcon,
+      label: 'Schedule',
     },
   ];
 

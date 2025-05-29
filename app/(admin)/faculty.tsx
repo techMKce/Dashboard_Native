@@ -21,7 +21,6 @@ import {
   Search,
   Plus,
   Mail,
-  Phone,
   GraduationCap,
   Trash2,
   CreditCard as Edit2,
@@ -32,7 +31,7 @@ const mockFaculty = [
     id: '1',
     name: 'Dr. John Smith',
     email: 'john.smith@university.edu',
-    phone: '+1 (555) 123-4567',
+    facultyId: 'F001',
     department: 'Computer Science',
     designation: 'Professor',
     courses: ['Advanced Database Systems', 'Web Development'],
@@ -41,7 +40,7 @@ const mockFaculty = [
     id: '2',
     name: 'Dr. Sarah Wilson',
     email: 'sarah.wilson@university.edu',
-    phone: '+1 (555) 234-5678',
+    facultyId: 'F002',
     department: 'Computer Science',
     designation: 'Associate Professor',
     courses: ['Machine Learning', 'Artificial Intelligence'],
@@ -52,10 +51,14 @@ export default function FacultyManagementScreen() {
   const [facultyList, setFacultyList] = useState(mockFaculty);
   const [searchQuery, setSearchQuery] = useState('');
   const [isAddModalVisible, setIsAddModalVisible] = useState(false);
-  const [newFaculty, setNewFaculty] = useState({
+  const [isEditModalVisible, setIsEditModalVisible] = useState(false);
+  const [selectedFaculty, setSelectedFaculty] = useState(null);
+
+  const [formFaculty, setFormFaculty] = useState({
+    id: '',
     name: '',
     email: '',
-    phone: '',
+    facultyId: '',
     department: '',
     designation: '',
   });
@@ -67,24 +70,61 @@ export default function FacultyManagementScreen() {
       faculty.department.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  // Open Edit Modal and populate form with selected faculty data
+  const openEditModal = (faculty) => {
+    setSelectedFaculty(faculty);
+    setFormFaculty({ ...faculty });
+    setIsEditModalVisible(true);
+  };
+
+  // Handle Add new faculty
   const handleAddFaculty = () => {
+    if (
+      !formFaculty.name.trim() ||
+      !formFaculty.email.trim() ||
+      !formFaculty.facultyId.trim() ||
+      !formFaculty.department.trim() ||
+      !formFaculty.designation.trim()
+    ) {
+      Alert.alert('Validation', 'Please fill all fields');
+      return;
+    }
+
     const newEntry = {
-      ...newFaculty,
+      ...formFaculty,
       id: Date.now().toString(),
       courses: [],
     };
 
     setFacultyList((prev) => [newEntry, ...prev]);
     setIsAddModalVisible(false);
-    setNewFaculty({
-      name: '',
-      email: '',
-      phone: '',
-      department: '',
-      designation: '',
-    });
+    resetForm();
   };
 
+  // Handle Edit faculty save
+  const handleSaveEdit = () => {
+    if (
+      !formFaculty.name.trim() ||
+      !formFaculty.email.trim() ||
+      !formFaculty.facultyId.trim() ||
+      !formFaculty.department.trim() ||
+      !formFaculty.designation.trim()
+    ) {
+      Alert.alert('Validation', 'Please fill all fields');
+      return;
+    }
+
+    setFacultyList((prev) =>
+      prev.map((faculty) =>
+        faculty.id === selectedFaculty.id ? formFaculty : faculty
+      )
+    );
+    setIsEditModalVisible(false);
+    setSelectedFaculty(null);
+    resetForm();
+  };
+
+  // Delete faculty
   const handleDeleteFaculty = (id, name) => {
     Alert.alert(
       'Delete Faculty',
@@ -103,6 +143,18 @@ export default function FacultyManagementScreen() {
     );
   };
 
+  // Reset form
+  const resetForm = () => {
+    setFormFaculty({
+      id: '',
+      name: '',
+      email: '',
+      facultyId: '',
+      department: '',
+      designation: '',
+    });
+  };
+
   return (
     <View style={styles.container}>
       <Header title="Faculty Management" />
@@ -112,14 +164,17 @@ export default function FacultyManagementScreen() {
           <Search size={20} color={COLORS.gray} style={styles.searchIcon} />
           <TextInput
             style={styles.searchInput}
-            placeholder="Search faculty..."
+            placeholder="  Search faculty..."
             value={searchQuery}
             onChangeText={setSearchQuery}
             placeholderTextColor={COLORS.gray}
           />
           <TouchableOpacity
             style={styles.addButton}
-            onPress={() => setIsAddModalVisible(true)}
+            onPress={() => {
+              resetForm();
+              setIsAddModalVisible(true);
+            }}
           >
             <Plus size={24} color={COLORS.white} />
           </TouchableOpacity>
@@ -134,9 +189,13 @@ export default function FacultyManagementScreen() {
                 <View>
                   <Text style={styles.facultyName}>{item.name}</Text>
                   <Text style={styles.designation}>{item.designation}</Text>
+                  <Text style={styles.facultyId}>ID: {item.facultyId}</Text>
                 </View>
                 <View style={styles.actionButtons}>
-                  <TouchableOpacity style={styles.editButton}>
+                  <TouchableOpacity
+                    style={styles.editButton}
+                    onPress={() => openEditModal(item)}
+                  >
                     <Edit2 size={16} color={COLORS.primary} />
                   </TouchableOpacity>
                   <TouchableOpacity
@@ -152,11 +211,6 @@ export default function FacultyManagementScreen() {
                 <View style={styles.detailItem}>
                   <Mail size={16} color={COLORS.gray} />
                   <Text style={styles.detailText}>{item.email}</Text>
-                </View>
-
-                <View style={styles.detailItem}>
-                  <Phone size={16} color={COLORS.gray} />
-                  <Text style={styles.detailText}>{item.phone}</Text>
                 </View>
 
                 <View style={styles.detailItem}>
@@ -180,6 +234,7 @@ export default function FacultyManagementScreen() {
           contentContainerStyle={styles.facultyList}
         />
 
+        {/* Add Faculty Modal */}
         <Modal
           visible={isAddModalVisible}
           transparent={true}
@@ -193,52 +248,41 @@ export default function FacultyManagementScreen() {
               <TextInput
                 style={styles.input}
                 placeholder="Full Name"
-                value={newFaculty.name}
-                onChangeText={(text) =>
-                  setNewFaculty({ ...newFaculty, name: text })
-                }
+                value={formFaculty.name}
+                onChangeText={(text) => setFormFaculty({ ...formFaculty, name: text })}
                 placeholderTextColor={COLORS.gray}
               />
 
               <TextInput
                 style={styles.input}
                 placeholder="Email"
-                value={newFaculty.email}
-                onChangeText={(text) =>
-                  setNewFaculty({ ...newFaculty, email: text })
-                }
+                value={formFaculty.email}
+                onChangeText={(text) => setFormFaculty({ ...formFaculty, email: text })}
                 placeholderTextColor={COLORS.gray}
                 keyboardType="email-address"
               />
 
               <TextInput
                 style={styles.input}
-                placeholder="Phone"
-                value={newFaculty.phone}
-                onChangeText={(text) =>
-                  setNewFaculty({ ...newFaculty, phone: text })
-                }
+                placeholder="Faculty ID"
+                value={formFaculty.facultyId}
+                onChangeText={(text) => setFormFaculty({ ...formFaculty, facultyId: text })}
                 placeholderTextColor={COLORS.gray}
-                keyboardType="phone-pad"
               />
 
               <TextInput
                 style={styles.input}
                 placeholder="Department"
-                value={newFaculty.department}
-                onChangeText={(text) =>
-                  setNewFaculty({ ...newFaculty, department: text })
-                }
+                value={formFaculty.department}
+                onChangeText={(text) => setFormFaculty({ ...formFaculty, department: text })}
                 placeholderTextColor={COLORS.gray}
               />
 
               <TextInput
                 style={styles.input}
                 placeholder="Designation"
-                value={newFaculty.designation}
-                onChangeText={(text) =>
-                  setNewFaculty({ ...newFaculty, designation: text })
-                }
+                value={formFaculty.designation}
+                onChangeText={(text) => setFormFaculty({ ...formFaculty, designation: text })}
                 placeholderTextColor={COLORS.gray}
               />
 
@@ -255,6 +299,80 @@ export default function FacultyManagementScreen() {
                   onPress={handleAddFaculty}
                 >
                   <Text style={styles.addButtonText}>Add Faculty</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
+
+        {/* Edit Faculty Modal */}
+        <Modal
+          visible={isEditModalVisible}
+          transparent={true}
+          animationType="slide"
+          onRequestClose={() => setIsEditModalVisible(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Edit Faculty</Text>
+
+              <TextInput
+                style={styles.input}
+                placeholder="Full Name"
+                value={formFaculty.name}
+                onChangeText={(text) => setFormFaculty({ ...formFaculty, name: text })}
+                placeholderTextColor={COLORS.gray}
+              />
+
+              <TextInput
+                style={styles.input}
+                placeholder="Email"
+                value={formFaculty.email}
+                onChangeText={(text) => setFormFaculty({ ...formFaculty, email: text })}
+                placeholderTextColor={COLORS.gray}
+                keyboardType="email-address"
+              />
+
+              <TextInput
+                style={styles.input}
+                placeholder="Faculty ID"
+                value={formFaculty.facultyId}
+                onChangeText={(text) => setFormFaculty({ ...formFaculty, facultyId: text })}
+                placeholderTextColor={COLORS.gray}
+              />
+
+              <TextInput
+                style={styles.input}
+                placeholder="Department"
+                value={formFaculty.department}
+                onChangeText={(text) => setFormFaculty({ ...formFaculty, department: text })}
+                placeholderTextColor={COLORS.gray}
+              />
+
+              <TextInput
+                style={styles.input}
+                placeholder="Designation"
+                value={formFaculty.designation}
+                onChangeText={(text) => setFormFaculty({ ...formFaculty, designation: text })}
+                placeholderTextColor={COLORS.gray}
+              />
+
+              <View style={styles.modalButtons}>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.cancelButton]}
+                  onPress={() => {
+                    setIsEditModalVisible(false);
+                    setSelectedFaculty(null);
+                  }}
+                >
+                  <Text style={styles.cancelButtonText}>Cancel</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.addButtonModal]}
+                  onPress={handleSaveEdit}
+                >
+                  <Text style={styles.addButtonText}>Save Changes</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -297,37 +415,45 @@ const styles = StyleSheet.create({
     ...SHADOWS.small,
   },
   addButton: {
-    backgroundColor: COLORS.primary,
-    borderRadius: 8,
-    padding: SPACING.sm,
     marginLeft: SPACING.sm,
-    ...SHADOWS.small,
+    backgroundColor: COLORS.primary,
+    padding: SPACING.sm,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...SHADOWS.medium,
   },
   facultyList: {
-    paddingBottom: 100,
+    paddingBottom: SPACING.lg,
   },
   facultyCard: {
     backgroundColor: COLORS.white,
-    borderRadius: 12,
+    borderRadius: 10,
     padding: SPACING.md,
     marginBottom: SPACING.md,
-    ...SHADOWS.small,
+    ...SHADOWS.light,
   },
   facultyHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: SPACING.sm,
+    alignItems: 'center',
   },
   facultyName: {
-    fontFamily: FONT.semiBold,
+    fontFamily: FONT.bold,
     fontSize: SIZES.lg,
-    color: COLORS.darkGray,
+    color: COLORS.text,
   },
   designation: {
+    fontFamily: FONT.medium,
+    fontSize: SIZES.md,
+    color: COLORS.primary,
+    marginTop: 2,
+  },
+  facultyId: {
     fontFamily: FONT.regular,
     fontSize: SIZES.sm,
     color: COLORS.gray,
+    marginTop: 4,
   },
   actionButtons: {
     flexDirection: 'row',
@@ -335,33 +461,37 @@ const styles = StyleSheet.create({
   },
   editButton: {
     padding: SPACING.xs,
+    borderRadius: 6,
+    backgroundColor: COLORS.white,
+    ...SHADOWS.light,
   },
   deleteButton: {
     padding: SPACING.xs,
+    borderRadius: 6,
+    backgroundColor: COLORS.white,
+    ...SHADOWS.light,
   },
   facultyDetails: {
-    marginBottom: SPACING.md,
+    marginTop: SPACING.sm,
   },
   detailItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: SPACING.xs,
+    marginTop: SPACING.xs,
   },
   detailText: {
+    marginLeft: SPACING.xs,
     fontFamily: FONT.regular,
     fontSize: SIZES.sm,
     color: COLORS.gray,
-    marginLeft: SPACING.xs,
   },
   coursesContainer: {
-    borderTopWidth: 1,
-    borderTopColor: COLORS.lightGray,
-    paddingTop: SPACING.sm,
+    marginTop: SPACING.md,
   },
   coursesLabel: {
     fontFamily: FONT.medium,
     fontSize: SIZES.sm,
-    color: COLORS.darkGray,
+    color: COLORS.text,
     marginBottom: SPACING.xs,
   },
   coursesList: {
@@ -376,28 +506,29 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   courseBadgeText: {
-    fontFamily: FONT.medium,
+    fontFamily: FONT.regular,
     fontSize: SIZES.xs,
     color: COLORS.secondary,
   },
+
+  // Modal styles
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0,0,0,0.4)',
     justifyContent: 'center',
-    alignItems: 'center',
+    paddingHorizontal: SPACING.md,
   },
   modalContent: {
     backgroundColor: COLORS.white,
     borderRadius: 12,
     padding: SPACING.lg,
-    width: '90%',
-    maxWidth: 500,
+    ...SHADOWS.medium,
   },
   modalTitle: {
     fontFamily: FONT.bold,
     fontSize: SIZES.lg,
-    color: COLORS.darkGray,
-    marginBottom: SPACING.lg,
+    marginBottom: SPACING.md,
+    color: COLORS.text,
     textAlign: 'center',
   },
   input: {
@@ -416,25 +547,27 @@ const styles = StyleSheet.create({
   },
   modalButton: {
     flex: 1,
+    paddingVertical: SPACING.sm,
     borderRadius: 8,
-    padding: SPACING.md,
+    justifyContent: 'center',
     alignItems: 'center',
-    marginHorizontal: SPACING.xs,
   },
   cancelButton: {
-    backgroundColor: COLORS.background,
+    backgroundColor: COLORS.grayLight,
+    marginRight: SPACING.sm,
+  },
+  cancelButtonText: {
+    color: COLORS.gray,
+    fontFamily: FONT.medium,
+    fontSize: SIZES.md,
   },
   addButtonModal: {
     backgroundColor: COLORS.primary,
-  },
-  cancelButtonText: {
-    fontFamily: FONT.semiBold,
-    fontSize: SIZES.md,
-    color: COLORS.gray,
+    marginLeft: SPACING.sm,
   },
   addButtonText: {
-    fontFamily: FONT.semiBold,
-    fontSize: SIZES.md,
     color: COLORS.white,
+    fontFamily: FONT.medium,
+    fontSize: SIZES.md,
   },
 });

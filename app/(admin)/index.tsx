@@ -3,38 +3,14 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-nati
 import { COLORS, FONT, SIZES, SPACING, SHADOWS } from '@/constants/theme';
 import Header from '@/components/shared/Header';
 import { useAuth } from '@/context/AuthContext';
-import { Users, GraduationCap, BookOpen, ChevronRight, ChartBar as BarChart } from 'lucide-react-native';
+import { Users, GraduationCap, BookOpen, ChevronRight } from 'lucide-react-native';
 
-const mockDashboardData = {
-  totalFaculty: 25,
-  totalStudents: 500,
-  totalCourses: 30,
-  recentActivities: [
-    {
-      id: '1',
-      type: 'faculty_added',
-      description: 'New faculty member added: Dr. Sarah Wilson',
-      timestamp: '2024-03-10T10:30:00Z',
-    },
-    {
-      id: '2',
-      type: 'course_created',
-      description: 'New course created: Advanced Machine Learning',
-      timestamp: '2024-03-10T09:15:00Z',
-    },
-    {
-      id: '3',
-      type: 'students_assigned',
-      description: '30 students assigned to Web Development course',
-      timestamp: '2024-03-09T16:45:00Z',
-    },
-  ],
-  departmentStats: [
-    { name: 'Computer Science', students: 150, faculty: 8 },
-    { name: 'Electrical Engineering', students: 120, faculty: 6 },
-    { name: 'Mechanical Engineering', students: 100, faculty: 5 },
-  ],
+const systemStatus = {
+  studentsEnrolled: 0,
+  facultyActive: 1,
+  coursesAvailable: 5,
 };
+
 
 export default function AdminDashboard() {
   const { user } = useAuth();
@@ -50,7 +26,7 @@ export default function AdminDashboard() {
               <Users size={24} color={COLORS.primary} />
             </View>
             <View>
-              <Text style={styles.statValue}>{mockDashboardData.totalFaculty}</Text>
+              <Text style={styles.statValue}>25</Text>
               <Text style={styles.statLabel}>Total Faculty</Text>
             </View>
           </View>
@@ -60,7 +36,7 @@ export default function AdminDashboard() {
               <GraduationCap size={24} color={COLORS.secondary} />
             </View>
             <View>
-              <Text style={styles.statValue}>{mockDashboardData.totalStudents}</Text>
+              <Text style={styles.statValue}>500</Text>
               <Text style={styles.statLabel}>Total Students</Text>
             </View>
           </View>
@@ -70,54 +46,29 @@ export default function AdminDashboard() {
               <BookOpen size={24} color={COLORS.accent} />
             </View>
             <View>
-              <Text style={styles.statValue}>{mockDashboardData.totalCourses}</Text>
+              <Text style={styles.statValue}>30</Text>
               <Text style={styles.statLabel}>Total Courses</Text>
             </View>
           </View>
         </View>
 
-        <View style={styles.sectionContainer}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Recent Activities</Text>
-            <TouchableOpacity>
-              <Text style={styles.viewAllText}>View All</Text>
-            </TouchableOpacity>
-          </View>
-          
-          {mockDashboardData.recentActivities.map((activity) => (
-            <TouchableOpacity key={activity.id} style={styles.activityCard}>
-              <View style={styles.activityInfo}>
-                <Text style={styles.activityDescription}>{activity.description}</Text>
-                <Text style={styles.activityTime}>
-                  {new Date(activity.timestamp).toLocaleString()}
-                </Text>
-              </View>
-              <ChevronRight size={20} color={COLORS.gray} />
-            </TouchableOpacity>
-          ))}
-        </View>
 
+        {/* System Status Section */}
         <View style={styles.sectionContainer}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Department Statistics</Text>
-            <BarChart size={20} color={COLORS.primary} />
+          <Text style={styles.sectionTitle}>System Status</Text>
+          <Text style={styles.sectionSubtitle}>Current system overview</Text>
+          <View style={styles.statusCard}>
+            <Text style={styles.statusLabel}>Students Enrolled</Text>
+            <Text style={styles.statusValue}>{systemStatus.studentsEnrolled}</Text>
           </View>
-          
-          {mockDashboardData.departmentStats.map((dept, index) => (
-            <View key={index} style={styles.departmentCard}>
-              <Text style={styles.departmentName}>{dept.name}</Text>
-              <View style={styles.departmentStats}>
-                <View style={styles.departmentStat}>
-                  <GraduationCap size={16} color={COLORS.secondary} />
-                  <Text style={styles.statText}>{dept.students} Students</Text>
-                </View>
-                <View style={styles.departmentStat}>
-                  <Users size={16} color={COLORS.primary} />
-                  <Text style={styles.statText}>{dept.faculty} Faculty</Text>
-                </View>
-              </View>
-            </View>
-          ))}
+          <View style={styles.statusCard}>
+            <Text style={styles.statusLabel}>Faculty Active</Text>
+            <Text style={styles.statusValue}>{systemStatus.facultyActive}</Text>
+          </View>
+          <View style={styles.statusCard}>
+            <Text style={styles.statusLabel}>Courses Available</Text>
+            <Text style={styles.statusValue}>{systemStatus.coursesAvailable}</Text>
+          </View>
         </View>
 
         <View style={{ height: 80 }} />
@@ -178,70 +129,58 @@ const styles = StyleSheet.create({
   sectionContainer: {
     marginBottom: SPACING.lg,
   },
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: SPACING.md,
-  },
   sectionTitle: {
     fontFamily: FONT.semiBold,
     fontSize: SIZES.md,
     color: COLORS.darkGray,
+    marginBottom: SPACING.xs,
   },
-  viewAllText: {
-    fontFamily: FONT.medium,
-    fontSize: SIZES.sm,
-    color: COLORS.primary,
-  },
-  activityCard: {
-    backgroundColor: COLORS.white,
-    borderRadius: 12,
-    padding: SPACING.md,
-    marginBottom: SPACING.sm,
-    flexDirection: 'row',
-    alignItems: 'center',
-    ...SHADOWS.small,
-  },
-  activityInfo: {
-    flex: 1,
-  },
-  activityDescription: {
-    fontFamily: FONT.medium,
-    fontSize: SIZES.md,
-    color: COLORS.darkGray,
-    marginBottom: 2,
-  },
-  activityTime: {
+  sectionSubtitle: {
     fontFamily: FONT.regular,
     fontSize: SIZES.sm,
     color: COLORS.gray,
+    marginBottom: SPACING.sm,
   },
-  departmentCard: {
+  quickActionsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    gap: SPACING.sm,
+  },
+  actionCard: {
+    backgroundColor: COLORS.white,
+    borderRadius: 12,
+    padding: SPACING.md,
+    width: '48%',   // roughly two cards per row with spacing
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    ...SHADOWS.small,
+    marginBottom: SPACING.sm,
+  },
+  actionLabel: {
+    fontFamily: FONT.medium,
+    fontSize: SIZES.sm,
+    color: COLORS.darkGray,
+    flexShrink: 1,
+  },
+  statusCard: {
     backgroundColor: COLORS.white,
     borderRadius: 12,
     padding: SPACING.md,
     marginBottom: SPACING.sm,
-    ...SHADOWS.small,
-  },
-  departmentName: {
-    fontFamily: FONT.semiBold,
-    fontSize: SIZES.md,
-    color: COLORS.darkGray,
-    marginBottom: SPACING.sm,
-  },
-  departmentStats: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    ...SHADOWS.small,
   },
-  departmentStat: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  statText: {
+  statusLabel: {
     fontFamily: FONT.medium,
-    fontSize: SIZES.sm,
+    fontSize: SIZES.md,
     color: COLORS.gray,
-    marginLeft: SPACING.xs,
+  },
+  statusValue: {
+    fontFamily: FONT.bold,
+    fontSize: SIZES.md,
+    color: COLORS.darkGray,
   },
 });
